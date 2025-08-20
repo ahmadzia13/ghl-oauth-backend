@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OAuth Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 350px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Enter OAuth Details</h2>
+    <input type="text" id="clientId" placeholder="Client ID" required>
+    <input type="text" id="clientSecret" placeholder="Client Secret" required>
+    <input type="text" id="scopes" placeholder="Scopes (space separated)" required>
+    <button onclick="startAuth()">Authenticate</button>
+  </div>
+
+  <script>
+    async function startAuth() {
+      const clientId = document.getElementById("clientId").value.trim();
+      const clientSecret = document.getElementById("clientSecret").value.trim();
+      const scopes = document.getElementById("scopes").value.trim().split(" ");
+
+      if (!clientId || !clientSecret || scopes.length === 0) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      const res = await fetch("/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, clientSecret, scopes })
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url; // redirect to OAuth login
+      } else {
+        alert("Error: " + JSON.stringify(data));
+      }
+    }
+  </script>
+</body>
+</html>
