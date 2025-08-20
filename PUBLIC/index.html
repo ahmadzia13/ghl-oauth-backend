@@ -1,75 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>OAuth Login</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      display: flex;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-    }
-    .box {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 350px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>OAuth Login</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #45a049;
+  }
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+    min-height: 40px;
+    cursor: text;
+  }
+  .tag {
+    background: #e0e0e0;
+    padding: 5px 10px;
+    margin: 3px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+  }
+  .tag span {
+    margin-left: 5px;
+    cursor: pointer;
+  }
+  .tag-input {
+    border: none;
+    flex: 1;
+    padding: 5px;
+    min-width: 120px;
+    outline: none;
+  }
+</style>
 </head>
 <body>
   <div class="box">
     <h2>Enter OAuth Details</h2>
     <input type="text" id="clientId" placeholder="Client ID" required>
     <input type="text" id="clientSecret" placeholder="Client Secret" required>
-    <input type="text" id="scopes" placeholder="Scopes (space separated)" required>
+
+    <div class="tags-container" id="tagsContainer">
+      <input type="text" class="tag-input" id="tagInput" placeholder="Type and press Enter">
+    </div>
+
     <button onclick="startAuth()">Authenticate</button>
   </div>
 
-  <script>
-    async function startAuth() {
-      const clientId = document.getElementById("clientId").value.trim();
-      const clientSecret = document.getElementById("clientSecret").value.trim();
-      const scopes = document.getElementById("scopes").value.trim().split(" ");
+<script>
+  const maxTags = 60;
+  const tagsContainer = document.getElementById('tagsContainer');
+  const tagInput = document.getElementById('tagInput');
+  
+  // Pre-fill with your 5 scopes
+  const tags = [
+    "contacts.readonly",
+    "contacts.write",
+    "conversations.readonly",
+    "businesses.readonly",
+    "calendars.readonly"
+  ];
 
-      if (!clientId || !clientSecret || scopes.length === 0) {
-        alert("Please fill all fields");
+  function createTag(label) {
+    const div = document.createElement('div');
+    div.classList.add('tag');
+    div.textContent = label;
+
+    const span = document.createElement('span');
+    span.textContent = '×';
+    span.onclick = () => removeTag(label);
+    div.appendChild(span);
+
+    tagsContainer.insertBefore(div, tagInput);
+  }
+
+  function removeTag(label) {
+    const index = tags.indexOf(label);
+    tags.splice(index, 1);
+    updateTags();
+  }
+
+  function updateTags() {
+    tagsContainer.querySelectorAll('.tag').forEach(tag => tag.remove());
+    tags.forEach(createTag);
+  }
+
+  // Render pre-filled tags on page load
+  updateTags();
+
+  tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && tagInput.value.trim() !== '') {
+      e.preventDefault();
+      if (tags.length >= maxTags) {
+        alert('Maximum 60 scopes allowed');
         return;
       }
-
-      const res = await fetch("/initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, clientSecret, scopes })
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // redirect to OAuth login
-      } else {
-        alert("Error: " + JSON.stringify(data));
+      const value = tagInput.value.trim();
+      if (!tags.includes(value)) {
+        tags.push(value);
+        updateTags();
       }
+      tagInput.value = '';
     }
-  </script>
+  });
+
+  async function startAuth() {
+    const clientId = document.getElementById("clientId").value.trim();
+    const clientSecret = document.getElementById("clientSecret").value.trim();
+
+    if (!clientId || !clientSecret || tags.length === 0) {
+      alert("Please fill all fields and add at least one scope");
+      return;
+    }
+
+    const res = await fetch("/initiate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, clientSecret, scopes: tags })
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Error: " + JSON.stringify(data));
+    }
+  }
+</script>
+
 </body>
 </html>
