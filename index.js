@@ -1,20 +1,23 @@
-const express = require('express');
-const path = require('path');
-
+const express = require("express");
+const path = require("path");
 const app = express();
 
-// Middleware to parse JSON
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (your index.html)
-app.use(express.static(path.join(__dirname, 'public')));
+// 👇 Serve static files from public folder
+app.use(express.static(path.join(__dirname, "public")));
 
-// Routes
-app.post('/initiate', require('./lib/initiate'));
-app.get('/refresh', require('./lib/refresh'));
-app.get('/oauth/callback', require('./lib/callback'));
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("App Listening on port", process.env.PORT || 3000);
+// If someone visits "/", serve index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+// Your routes
+const initiateAuth = require("./lib/initiate");
+const callback = require("./lib/callback");
+
+app.post("/initiate", initiateAuth);
+app.get("/oauth/callback", callback);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`App Listening on ${PORT} !`));
