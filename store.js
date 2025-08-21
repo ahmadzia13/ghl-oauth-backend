@@ -1,21 +1,21 @@
-// store.js
-let tokens = {};
+const config = require('./config.json');
 
-module.exports = {
-  setTokens: (id, data) => {
-    tokens[id] = data;
-  },
-  getTokens: (id) => {
-    return tokens[id];
-  }
+let store = { 
+  ...config, 
+  tokens: null 
 };
 
-// In store.js
-const config = require('./config.json');
-let store = { ...config, tokens: null };
-
 module.exports = {
-  set: (data) => { store = { ...store, ...data }; },
+  set: (data) => { 
+    store = { ...store, ...data }; 
+  },
   get: () => store,
-  setTokens: (tokens) => { store.tokens = tokens; }
+  setTokens: (tokens) => { 
+    store.tokens = tokens; 
+  },
+  getTokens: () => store.tokens || {}, // Add this missing method
+  getCredentials: () => ({
+    clientId: store.clientId,
+    clientSecret: store.clientSecret
+  })
 };
