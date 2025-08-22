@@ -17,11 +17,14 @@ const callback = require("./lib/callback");
 
 const crediantals = require("./lib/crediantals");
 
-app.get("/tokens", (req, res) => {
-  if (!crediantals.isValid()) {
+app.get("/tokens/:locationId", (req, res) => {
+  const { locationId } = req.params;
+
+  if (!crediantals.isValid(locationId)) {
     return res.status(401).json({ error: "No valid tokens. Please authenticate again." });
   }
-  res.json(crediantals.getTokens());
+
+  res.json(crediantals.getTokens(locationId));
 });
 
 app.post("/initiate", initiateAuth);
