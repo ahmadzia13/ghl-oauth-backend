@@ -1,30 +1,39 @@
 const express = require("express");
 const path = require("path");
 const app = express();
-
 app.use(express.json());
 
-// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
+
+const initiateAuth = require("./lib/initiate");
+const callback = require("./lib/callback");
+const crediantals = require("./lib/crediantals");
+const store = require("./store"); // has clientId & clientSecret
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Routes
-const initiateAuth = require("./lib/initiate");
-const callback = require("./lib/callback");
-
-const crediantals = require("./lib/crediantals");
-
-app.get("/tokens/:locationId", (req, res) => {
+// Auto-refresh tokens when expired
+app.get("/tokens/:locationId", async (req, res) => {
   const { locationId } = req.params;
+  const creds = crediantals.getTokens(locationId);
 
-  if (!crediantals.isValid(locationId)) {
-    return res.status(401).json({ error: "No valid tokens. Please authenticate again." });
+  if (!creds) {
+    return res.status(404).json({ error: "No tokens stored for this locationId" });
   }
 
-  res.json(crediantals.getTokens(locationId));
+  if (crediantals.isExpired(locationId)) {
+    try {
+      const { clientId, clientSecret } = store.get();
+      const newTokens = await crediantals.refreshTokens(locationId, clientId, clientSecret);
+      return res.json({ tokens: newTokens, refreshed: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.response?.data || err.message });
+    }
+  }
+
+  return res.json({ tokens: creds.tokens, refreshed: false });
 });
 
 app.post("/initiate", initiateAuth);
