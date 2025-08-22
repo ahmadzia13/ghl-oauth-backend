@@ -1,21 +1,14 @@
-const config = require('./config.json');
+const config = require("./config.json");
 
-let store = { 
-  ...config, 
-  tokens: null 
+let store = {
+  baseUrl: config.baseUrl,
+  clients: config.clients,
+  tokens: {} // store tokens per client
 };
 
 module.exports = {
-  set: (data) => { 
-    store = { ...store, ...data }; 
-  },
-  get: () => store,
-  setTokens: (tokens) => { 
-    store.tokens = tokens; 
-  },
-  getTokens: () => store.tokens || {}, // Add this missing method
-  getCredentials: () => ({
-    clientId: store.clientId,
-    clientSecret: store.clientSecret
-  })
+  getClient: (name) => store.clients[name],
+  setTokens: (name, tokens) => { store.tokens[name] = tokens; },
+  getTokens: (name) => store.tokens[name] || {},
+  getAllTokens: () => store.tokens
 };
