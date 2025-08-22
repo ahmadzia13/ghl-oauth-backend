@@ -1,14 +1,21 @@
-const config = require("./config.json");
+const config = require('./config.json');
 
-let store = {
-  baseUrl: config.baseUrl,
-  clients: config.clients,
-  tokens: {} // store tokens per client
+let store = { 
+  ...config, 
+  tokens: null 
 };
 
 module.exports = {
-  getClient: (name) => store.clients[name],
-  setTokens: (name, tokens) => { store.tokens[name] = tokens; },
-  getTokens: (name) => store.tokens[name] || {},
-  getAllTokens: () => store.tokens
+  set: (data) => { 
+    store = { ...store, ...data }; 
+  },
+  get: () => store,
+  setTokens: (tokens) => { 
+    store.tokens = tokens; 
+  },
+  getTokens: () => store.tokens || {}, 
+  getCredentials: () => ({
+    clientId: store.clientId,
+    clientSecret: store.clientSecret
+  })
 };
