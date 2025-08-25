@@ -19,7 +19,7 @@
     width: 400px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
-  input, button {
+  input, button, select {
     width: 100%;
     padding: 10px;
     margin: 8px 0;
@@ -63,13 +63,29 @@
     min-width: 120px;
     outline: none;
   }
+  .client-selector {
+    margin-bottom: 15px;
+  }
+  .hidden {
+    display: none;
+  }
 </style>
 </head>
 <body>
   <div class="box">
-    <h2>Enter OAuth Details</h2>
-    <input type="text" id="clientId" placeholder="Client ID" required>
-    <input type="text" id="clientSecret" placeholder="Client Secret" required>
+    <h2>OAuth Login</h2>
+    
+    <div class="client-selector">
+      <select id="clientSelect" onchange="handleClientSelect()">
+        <option value="">Select an existing client or add new</option>
+      </select>
+      <button onclick="loadClients()">Refresh Client List</button>
+    </div>
+    
+    <div id="clientForm">
+      <input type="text" id="clientId" placeholder="Client ID" required>
+      <input type="text" id="clientSecret" placeholder="Client Secret" required>
+    </div>
 
     <div class="tags-container" id="tagsContainer">
       <input type="text" class="tag-input" id="tagInput" placeholder="Type and press Enter">
@@ -135,6 +151,50 @@
     }
   });
 
+  // Load clients from the server
+  async function loadClients() {
+    try {
+      const res = await fetch("/clients");
+      const clients = await res.json();
+      
+      const select = document.getElementById("clientSelect");
+      // Clear existing options except the first one
+      select.innerHTML = '<option value="">Select an existing client or add new</option>';
+      
+      // Add clients to the dropdown
+      clients.forEach(client => {
+        const option = document.createElement("option");
+        option.value = JSON.stringify({clientId: client.clientId, clientSecret: client.clientSecret});
+        option.textContent = `${client.clientId} (${client.locationId})`;
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Error loading clients:", err);
+      alert("Error loading clients");
+    }
+  }
+
+  // Handle client selection
+  function handleClientSelect() {
+    const select = document.getElementById("clientSelect");
+    const clientForm = document.getElementById("clientForm");
+    
+    if (select.value) {
+      // Hide the form when a client is selected
+      clientForm.classList.add("hidden");
+      
+      // Fill the form fields with selected client data
+      const client = JSON.parse(select.value);
+      document.getElementById("clientId").value = client.clientId;
+      document.getElementById("clientSecret").value = client.clientSecret;
+    } else {
+      // Show the form when "add new" is selected
+      clientForm.classList.remove("hidden");
+      document.getElementById("clientId").value = "";
+      document.getElementById("clientSecret").value = "";
+    }
+  }
+
   async function startAuth() {
     const clientId = document.getElementById("clientId").value.trim();
     const clientSecret = document.getElementById("clientSecret").value.trim();
@@ -157,6 +217,11 @@
       alert("Error: " + JSON.stringify(data));
     }
   }
+
+  // Load clients when the page loads
+  window.onload = function() {
+    loadClients();
+  };
 </script>
 
 </body>

@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
-const ClientSchema = new mongoose.Schema({
-  clientId: String,
-  clientSecret: String,
-  locationId: { type: String, unique: true },
-  tokens: Object   // 👈 so we can store access/refresh tokens
+const clientSchema = new mongoose.Schema({
+  clientId: { type: String, required: true },
+  clientSecret: { type: String, required: true },
+  locationId: { type: String, required: true, unique: true },
+  companyId: String, // optional
 });
 
-// Prevent OverwriteModelError
-module.exports = mongoose.models.Client || mongoose.model("Client", ClientSchema);
+const Client = mongoose.models.Client || mongoose.model("Client", clientSchema);
+module.exports = Client;
